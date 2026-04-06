@@ -16,9 +16,9 @@
         </form>
     </div>
 </div>
-
+@if(in_array(auth()->user()->codpes ?? [], explode(',',config('delpo.admins'))))
     @include('partials.table_index')
-
+@endif
     <style>
         #tr:hover{
             background-color:#c2c2c2;

@@ -6,10 +6,12 @@ use App\Http\Requests\MaterialRequest;
 use App\Models\Material;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 class MaterialController extends Controller
 {
     public function show(Material $material){
+        Gate::authorize('admin');
         return view('show', ['material' => $material]);
     }
 
@@ -47,13 +49,15 @@ class MaterialController extends Controller
 
     public function downloadText(Material $material){
         $material = collect($material)->slice(1,-2); //pula id e created_at
-        
+        $nome_arquivo = Str::limit($material['titulo'], 70) . ' - ' . Str::limit($material['autores'], 40);
+        $utf8Filename = rawurlencode($nome_arquivo);
+
         $material = $material       //coloca o nome do campo no arquivo
         ->map(fn($value, $key) => "$key: $value")
         ->implode("\n");
         
         return response($material)
             ->header('Content-Type', 'text/plain')
-            ->header('Content-Disposition', 'attachment; filename="arquivo.txt"');
+            ->header('Content-Disposition', "attachment; filename=$utf8Filename.txt");
     }
 }
