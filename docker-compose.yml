@@ -1,0 +1,44 @@
+services:
+  delpo:
+    image: delpo:latest
+    container_name: delpo
+    ports:
+      - "8000:80"
+    depends_on:
+      - mariadb
+    networks:
+      - delpo-network
+    volumes:
+      - ./:/var/www/html
+    environment:
+      HOME: /tmp
+    user: "${UID:-1000}:${GID:-1000}"
+
+  mariadb:
+    image: mariadb:11
+    container_name: delpo_mariadb
+    restart: always
+    environment:
+      MYSQL_DATABASE: delpo
+      MYSQL_USER: delpo
+      MYSQL_PASSWORD: delpo
+      MYSQL_ROOT_PASSWORD: delpo
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - delpo-network
+
+  selenium:
+    image: selenium/standalone-chrome
+    container_name: delpo_selenium
+    ports:
+      - "7900:7900" # VNC (pra ver o browser rodando)
+    networks:
+      - delpo-network
+    shm_size: 2gb
+
+networks:
+  delpo-network:
+
+volumes:
+  mariadb_data:
