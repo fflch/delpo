@@ -1,0 +1,84 @@
+services:
+  delpo:
+    build: .
+    image: delpo:latest
+    container_name: delpo
+    ports:
+      - "8000:80"
+    depends_on:
+      - mariadb
+    networks:
+      - delpo-network
+    volumes:
+      - ./:/var/www/html
+    environment:
+      HOME: /tmp
+    user: "${UID:-1000}:${GID:-1000}"
+
+  mariadb:
+    image: mariadb:11
+    container_name: delpo_mariadb
+    restart: always
+    environment:
+      MYSQL_DATABASE: delpo
+      MYSQL_USER: delpo
+      MYSQL_PASSWORD: delpo
+      MYSQL_ROOT_PASSWORD: delpo
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - delpo-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: delpo_phpmyadmin
+    restart: always
+    depends_on:
+      - mariadb
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: delpo
+    networks:
+      - delpo-network
+      
+  selenium:
+    image: selenium/standalone-chrome
+    container_name: delpo_selenium
+    ports:
+      - "7900:7900"
+    networks:
+      - delpo-network
+    shm_size: 2gb
+
+  # No /etc/hosts do seu computador colocar a linha `127.0.0.1 auth.local` 
+  # particularidades do protocolo oAuth1 usado na USP
+  senhaunica-faker:
+    image: uspdev/senhaunica-faker
+    container_name: delpo_senhaunica-faker
+    ports:
+      - "3141:3141"
+    environment:
+          - APP_URL=http://auth.local:3141
+    networks:
+      delpo-network:
+        aliases:
+          - auth.local
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: delpo_mailpit
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Interface Web
+    networks:
+      - delpo-network
+
+networks:
+  delpo-network:
+
+volumes:
+  mariadb_data:
